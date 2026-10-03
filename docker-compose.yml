@@ -1,0 +1,42 @@
+x-app: &app
+  build: .
+  env_file: .env
+  depends_on:
+    postgres: {condition: service_healthy}
+    mongo: {condition: service_started}
+    redis: {condition: service_started}
+  extra_hosts: ["host.docker.internal:host-gateway"]
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ctt
+      POSTGRES_PASSWORD: ctt
+      POSTGRES_DB: ctt
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ctt"]
+      interval: 3s
+      retries: 10
+  mongo:
+    image: mongodb/mongodb-atlas-local:8.0
+    ports: ["27017:27017"]
+    volumes: [mongodata:/data/db]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+  api:
+    <<: *app
+    command: sh -c "alembic upgrade head && uvicorn ctt.api.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports: ["8000:8000"]
+    volumes: [".:/app"]
+  worker:
+    <<: *app
+    command: celery -A ctt.workers.celery_app worker --loglevel=info
+    volumes: [".:/app"]
+
+volumes:
+  pgdata:
+  mongodata:

@@ -1,0 +1,18 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    database_url: str = "postgresql+psycopg://ctt:ctt@localhost:5432/ctt"
+    mongo_url: str = "mongodb://localhost:27017/?directConnection=true"
+    mongo_db: str = "ctt"
+    redis_url: str = "redis://localhost:6379/0"
+    llm_provider: str = "ollama"  # ollama | openrouter
+    llm_model: str = "llama3.1"
+    ollama_base_url: str = "http://localhost:11434/v1"
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+
+
+settings = Settings()
